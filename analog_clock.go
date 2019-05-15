@@ -7,20 +7,38 @@ import (
 )
 
 type AnalogClock struct {
-	renderer *sdl.Renderer
-	rect     sdl.Rect
-	texFace  *sdl.Texture
-	fg, bg   sdl.Color
+	renderer                                   *sdl.Renderer
+	rect                                       sdl.Rect
+	texFace                                    *sdl.Texture
+	fg, bg, secHandColor                       sdl.Color
+	hourHand, minuteHand, secondHand, mSecHand *ClockHand
+	drawMsec                                   bool
 }
 
-func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) *AnalogClock {
+func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, bg sdl.Color) *AnalogClock {
 	texFace := NewClockFace(renderer, rect, fg, bg)
+	rectWidth, rectHeight := int32(float64(rect.H)*0.470), int32(float64(rect.H)*0.02)
+	mSecHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1), rectHeight / 2}, sdl.Point{int32(float64(rectHeight) * 0.2), rectHeight / 4}, secHandColor, bg)
+	secondHand := NewSmallHand(
+		renderer,
+		rect.W,
+		rect.H,
+		sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1.2), rectHeight / 2},
+		sdl.Point{int32(float64(rectWidth) * 0.2), rectHeight / 4},
+		secHandColor,
+		bg)
+	minuteHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 0.9), rectHeight * 2}, sdl.Point{rectHeight * 2, rectHeight / 2 * 2}, fg, bg)
+	hourHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 0.7), rectHeight * 2}, sdl.Point{rectHeight * 2, rectHeight / 2 * 2}, fg, bg)
 	return &AnalogClock{
-		renderer: renderer,
-		rect:     rect,
-		texFace:  texFace,
-		fg:       fg,
-		bg:       bg,
+		renderer:   renderer,
+		rect:       rect,
+		texFace:    texFace,
+		fg:         fg,
+		bg:         bg,
+		hourHand:   hourHand,
+		minuteHand: minuteHand,
+		secondHand: secondHand,
+		mSecHand:   mSecHand,
 	}
 }
 
@@ -28,12 +46,30 @@ func (s *AnalogClock) Render(renderer *sdl.Renderer) {
 	if err := renderer.Copy(s.texFace, nil, &s.rect); err != nil {
 		panic(err)
 	}
+	s.hourHand.Render(s.renderer)
+	s.minuteHand.Render(s.renderer)
+	s.secondHand.Render(s.renderer)
+	if s.drawMsec {
+		s.mSecHand.Render(s.renderer)
+	}
 }
 
-func (s *AnalogClock) Update()         {}
+func (s *AnalogClock) Update() {
+	mSec, sec, minute, hour := getTime()
+	s.mSecHand.Update(float64(mSec) / 1000.0)
+	s.secondHand.Update((float64(sec) + s.mSecHand.GetFraction()) / 60.0)
+	s.minuteHand.Update((float64(minute) + s.secondHand.GetFraction()) / 60.0)
+	s.hourHand.Update((float64(hour) + s.minuteHand.GetFraction()) / 12.0)
+}
 func (s *AnalogClock) Event(sdl.Event) {}
-func (s *AnalogClock) Destroy()        { s.texFace.Destroy() }
-func (s *AnalogClock) String()         { fmt.Sprintln("AnalogClock:%v %v %v", s.fg, s.bg, s.rect) }
+func (s *AnalogClock) Destroy() {
+	s.texFace.Destroy()
+	s.hourHand.Destroy()
+	s.minuteHand.Destroy()
+	s.secondHand.Destroy()
+	s.mSecHand.Destroy()
+}
+func (s *AnalogClock) String() { fmt.Sprintln("AnalogClock:%v %v %v", s.fg, s.bg, s.rect) }
 
 func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texClockFace *sdl.Texture) {
 	var err error
@@ -47,10 +83,11 @@ func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texC
 	setColor(renderer, fg)
 	renderer.Clear()
 	FillCircle(renderer, center.X, center.Y, rect.H/2, bg)
-	renderer.DrawLine(0, 0, rect.W, rect.H)
-	renderer.DrawLine(0, rect.H, rect.W, 0)
-	renderer.DrawLine(rect.W/2, 0, rect.W/2, 0)
-	renderer.DrawLine(0, rect.H/2, rect.W, rect.H/2)
+	setColor(renderer, sdl.Color{192, 255, 128, 255})
+	// renderer.DrawLine(0, 0, rect.W, rect.H)
+	// renderer.DrawLine(0, rect.H, rect.W, 0)
+	// renderer.DrawLine(rect.W/2, 0, rect.W/2, 0)
+	// renderer.DrawLine(0, rect.H/2, rect.W, rect.H/2)
 	var x, y int32
 	for y = 0; y < rect.H; y += 5 {
 		for x = 0; x < rect.W; x += 5 {
@@ -58,7 +95,6 @@ func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texC
 			renderer.DrawLine(0, y, rect.W, y)
 		}
 	}
-
 	for i := 0; i < 60; i++ {
 		var (
 			tip    sdl.Point
@@ -74,15 +110,4 @@ func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texC
 	}
 	renderer.SetRenderTarget(nil)
 	return texClockFace
-}
-
-func FillCircle(renderer *sdl.Renderer, x0, y0, radius int32, color sdl.Color) {
-	setColor(renderer, color)
-	for y := -radius; y <= radius; y++ {
-		for x := -radius; x <= radius; x++ {
-			if x*x+y*y <= radius*radius {
-				renderer.DrawPoint(x0+x, y0+y)
-			}
-		}
-	}
 }

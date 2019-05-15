@@ -30,16 +30,17 @@ func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, 
 		width:    width,
 		height:   height,
 		font:     font,
-		bg:       sdl.Color{0, 64, 0, 0},
-		fg:       sdl.Color{255, 0, 255, 255},
+		bg:       sdl.Color{192, 192, 192, 0},
+		fg:       sdl.Color{0, 0, 0, 255},
 	}
 }
 
 func (s *Screen) setup() {
 	s.lblTime = NewLabel("--:--", sdl.Point{0, 0}, s.fg, s.renderer, s.font)
 	lblRect := s.lblTime.GetSize()
-	s.lblTime.SetPos(sdl.Point{s.width/2 - lblRect.W/2, s.height - lblRect.H})
-	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{50, 50, 300, 300}, s.fg, s.bg)
+	lblPos := sdl.Point{s.width/2 - lblRect.W/2, s.height - lblRect.H}
+	s.lblTime.SetPos(lblPos)
+	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, 0, s.height, s.height - lblRect.H}, s.fg, sdl.Color{255, 0, 0, 255}, s.bg)
 }
 func (s *Screen) setMode() {
 	if s.flags == 0 {
@@ -97,6 +98,7 @@ func (s *Screen) Update() {
 		lblStr = fmt.Sprintf("%02d %02d", hour, minute)
 	}
 	s.lblTime.SetText(lblStr)
+	s.analogClock.Update()
 
 	if sdl.GetTicks()-s.fpsCountTime > 999 {
 		s.window.SetTitle(fmt.Sprintf("%s fps:%v", s.title, s.fpsCount))

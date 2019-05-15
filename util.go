@@ -20,10 +20,27 @@ func getTime() (int, int, int, int) {
 }
 
 func getTip(center sdl.Point, percent, lenght, width, height float64) (tip sdl.Point) {
-	angle := (0.5 - percent) * (2.0 * math.Pi)
-	sine := math.Sin(angle)
-	cosine := math.Cos(angle)
+	radians := (0.5 - percent) * (2.0 * math.Pi)
+	sine := math.Sin(radians)
+	cosine := math.Cos(radians)
 	tip.X = center.X + int32(lenght*sine-width)
 	tip.Y = center.Y + int32(lenght*cosine-height)
 	return tip
+}
+
+func getAngle(percent float64) float64 {
+	radians := (0.5 - percent) * (2.0 * math.Pi)
+	angle := (radians * -180 / math.Pi) + 90
+	return angle
+}
+
+func FillCircle(renderer *sdl.Renderer, x0, y0, radius int32, color sdl.Color) {
+	setColor(renderer, color)
+	for y := -radius; y <= radius; y++ {
+		for x := -radius; x <= radius; x++ {
+			if x*x+y*y <= radius*radius {
+				renderer.DrawPoint(x0+x, y0+y)
+			}
+		}
+	}
 }
