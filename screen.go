@@ -18,6 +18,7 @@ type Screen struct {
 	bg, fg                 sdl.Color
 	fpsCountTime, fpsCount uint32
 	lblTime                *Label
+	blinkTimer             *BlinkTimer
 }
 
 func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, height int32, font *ttf.Font) *Screen {
@@ -88,7 +89,11 @@ func (s *Screen) Event() {
 func (s *Screen) Update() {
 	_, _, minute, hour := getTime()
 	lblStr := ""
-	lblStr = fmt.Sprintf("%02d:%02d", hour, minute)
+	if s.blinkTimer.IsOn() {
+		lblStr = fmt.Sprintf("%02d:%02d", hour, minute)
+	} else {
+		lblStr = fmt.Sprintf("%02d %02d", hour, minute)
+	}
 
 	s.lblTime.SetText(lblStr)
 
@@ -110,6 +115,8 @@ func (s *Screen) Render() {
 func (s *Screen) quit() { s.running = false }
 func (s *Screen) Run() {
 	s.setup()
+	s.blinkTimer = &BlinkTimer{}
+	go s.blinkTimer.Run()
 	frameRate := uint32(1000 / 60)
 	lastTime := sdl.GetTicks()
 	s.running = true
@@ -136,5 +143,6 @@ func (s *Screen) Run() {
 			sdl.Delay(lastTime - now)
 		}
 	}
+	s.blinkTimer.Quit()
 }
 func (s *Screen) Destroy() {}
