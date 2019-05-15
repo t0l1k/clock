@@ -17,6 +17,7 @@ type Screen struct {
 	running                bool
 	bg, fg                 sdl.Color
 	fpsCountTime, fpsCount uint32
+	lblTime                *Label
 }
 
 func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, height int32, font *ttf.Font) *Screen {
@@ -32,7 +33,11 @@ func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, 
 	}
 }
 
-func (s *Screen) setup() {}
+func (s *Screen) setup() {
+	s.lblTime = NewLabel("--:--", sdl.Point{0, 0}, s.fg, s.renderer, s.font)
+	lblRect := s.lblTime.GetSize()
+	s.lblTime.SetPos(sdl.Point{s.width/2 - lblRect.W/2, int32(float64(s.height) * 0.6)})
+}
 func (s *Screen) setMode() {
 	if s.flags == 0 {
 		s.flags = sdl.WINDOW_FULLSCREEN_DESKTOP
@@ -81,6 +86,12 @@ func (s *Screen) Event() {
 	}
 }
 func (s *Screen) Update() {
+	_, _, minute, hour := getTime()
+	lblStr := ""
+	lblStr = fmt.Sprintf("%02d:%02d", hour, minute)
+
+	s.lblTime.SetText(lblStr)
+
 	if sdl.GetTicks()-s.fpsCountTime > 999 {
 		s.window.SetTitle(fmt.Sprintf("%s fps:%v", s.title, s.fpsCount))
 		s.fpsCount = 0
@@ -91,6 +102,7 @@ func (s *Screen) Render() {
 	setColor(s.renderer, s.bg)
 	s.renderer.Clear()
 	setColor(s.renderer, s.fg)
+	s.lblTime.Render(s.renderer)
 
 	s.renderer.Present()
 	s.fpsCount++
