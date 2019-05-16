@@ -10,41 +10,43 @@ type AnalogClock struct {
 	renderer                                   *sdl.Renderer
 	rect                                       sdl.Rect
 	texFace                                    *sdl.Texture
-	fg, bg, secHandColor                       sdl.Color
+	fg, bg, secHandColor, tweentyPointColor    sdl.Color
 	hourHand, minuteHand, secondHand, mSecHand *ClockHand
 	drawMsec                                   bool
+	tweentyBlinkTimer                          *BlinkTimer
+	tipTweentyPoint                            sdl.Point
 }
 
-func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, bg sdl.Color) *AnalogClock {
+func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, tweentyPointColor, bg sdl.Color, blinkTimer *BlinkTimer) *AnalogClock {
 	texFace := NewClockFace(renderer, rect, fg, bg)
 	rectWidth, rectHeight := int32(float64(rect.H)*0.470), int32(float64(rect.H)*0.02)
 	mSecHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1), rectHeight / 2}, sdl.Point{int32(float64(rectHeight) * 0.2), rectHeight / 4}, secHandColor, bg)
-	secondHand := NewSmallHand(
-		renderer,
-		rect.W,
-		rect.H,
-		sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1.2), rectHeight / 2},
-		sdl.Point{int32(float64(rectWidth) * 0.2), rectHeight / 4},
-		secHandColor,
-		bg)
+	secondHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1.13), rectHeight / 2}, sdl.Point{int32(float64(rectWidth) * 0.2), rectHeight / 4}, secHandColor, bg)
 	minuteHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 0.9), rectHeight * 2}, sdl.Point{rectHeight * 2, rectHeight / 2 * 2}, fg, bg)
 	hourHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 0.7), rectHeight * 2}, sdl.Point{rectHeight * 2, rectHeight / 2 * 2}, fg, bg)
+	tipTweentyPoint := getTip(sdl.Point{rect.W / 2, rect.H / 2}, 0/60, float64(rect.H/2-(rect.H/90)*3), 0, 0)
 	return &AnalogClock{
-		renderer:   renderer,
-		rect:       rect,
-		texFace:    texFace,
-		fg:         fg,
-		bg:         bg,
-		hourHand:   hourHand,
-		minuteHand: minuteHand,
-		secondHand: secondHand,
-		mSecHand:   mSecHand,
+		renderer:          renderer,
+		rect:              rect,
+		texFace:           texFace,
+		fg:                fg,
+		bg:                bg,
+		tweentyPointColor: tweentyPointColor,
+		hourHand:          hourHand,
+		minuteHand:        minuteHand,
+		secondHand:        secondHand,
+		mSecHand:          mSecHand,
+		tweentyBlinkTimer: blinkTimer,
+		tipTweentyPoint:   tipTweentyPoint,
 	}
 }
 
 func (s *AnalogClock) Render(renderer *sdl.Renderer) {
 	if err := renderer.Copy(s.texFace, nil, &s.rect); err != nil {
 		panic(err)
+	}
+	if s.tweentyBlinkTimer.IsOn() {
+		FillCircle(s.renderer, s.rect.X+s.tipTweentyPoint.X, s.rect.Y+s.tipTweentyPoint.Y, s.rect.H/160, s.tweentyPointColor)
 	}
 	s.hourHand.Render(s.renderer)
 	s.minuteHand.Render(s.renderer)
@@ -80,7 +82,7 @@ func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texC
 	margin := rect.H / 90
 	renderer.SetRenderTarget(texClockFace)
 	texClockFace.SetBlendMode(sdl.BLENDMODE_BLEND)
-	setColor(renderer, fg)
+	setColor(renderer, bg)
 	renderer.Clear()
 	FillCircle(renderer, center.X, center.Y, rect.H/2, bg)
 	setColor(renderer, sdl.Color{192, 255, 128, 255})
@@ -88,13 +90,13 @@ func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texC
 	// renderer.DrawLine(0, rect.H, rect.W, 0)
 	// renderer.DrawLine(rect.W/2, 0, rect.W/2, 0)
 	// renderer.DrawLine(0, rect.H/2, rect.W, rect.H/2)
-	var x, y int32
-	for y = 0; y < rect.H; y += 5 {
-		for x = 0; x < rect.W; x += 5 {
-			renderer.DrawLine(x, 0, x, rect.H)
-			renderer.DrawLine(0, y, rect.W, y)
-		}
-	}
+	// var x, y int32
+	// for y = 0; y < rect.H; y += 5 {
+	// 	for x = 0; x < rect.W; x += 5 {
+	// 		renderer.DrawLine(x, 0, x, rect.H)
+	// 		renderer.DrawLine(0, y, rect.W, y)
+	// 	}
+	// }
 	for i := 0; i < 60; i++ {
 		var (
 			tip    sdl.Point
