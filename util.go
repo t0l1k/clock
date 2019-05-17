@@ -44,13 +44,3 @@ func FillCircle(renderer *sdl.Renderer, x0, y0, radius int32, color sdl.Color) {
 		}
 	}
 }
-
-// func getPixel(texture *sdl.Texture, x0, y0 int32) (color sdl.Color) {
-// 	var surface *sdl.Surface
-// 	format, _, width, height, _ := texture.Query()
-// 	surface = sdl.CreateRGBSurface(format,width,height)
-// 	return color
-// }
-
-// func FloodFill(renderer *sdl.Renderer, x0, y0 int32, newColor, oldColor sdl.Color) {
-// }
