@@ -20,6 +20,7 @@ type Screen struct {
 	lblTime                *Label
 	blinkTimer             *BlinkTimer
 	analogClock            *AnalogClock
+	timer                  *Timer
 }
 
 func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, height int32, font *ttf.Font) *Screen {
@@ -36,11 +37,11 @@ func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, 
 }
 
 func (s *Screen) setup() {
-	s.lblTime = NewLabel("--:--", sdl.Point{0, 0}, s.fg, s.renderer, s.font)
+	s.lblTime = NewLabel("--:--:--", sdl.Point{0, 0}, s.fg, s.renderer, s.font)
 	lblRect := s.lblTime.GetSize()
 	lblPos := sdl.Point{s.width/2 - lblRect.W/2, s.height - lblRect.H}
 	s.lblTime.SetPos(lblPos)
-	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, lblRect.H, s.height, s.height - lblRect.H*2}, s.fg, sdl.Color{255, 0, 0, 255}, sdl.Color{255, 255, 0, 255}, s.bg, s.blinkTimer)
+	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, lblRect.H, s.height, s.height - lblRect.H*2}, s.fg, sdl.Color{255, 0, 0, 255}, sdl.Color{255, 255, 0, 255}, s.bg, s.blinkTimer, s.timer.GetTimer)
 }
 func (s *Screen) setMode() {
 	if s.flags == 0 {
@@ -71,6 +72,16 @@ func (s *Screen) Event() {
 		if t.Keysym.Sym == sdl.K_F11 && t.State == sdl.RELEASED {
 			s.setMode()
 		}
+		if t.Keysym.Sym == sdl.K_SPACE && t.State == sdl.RELEASED {
+			if !s.timer.IsPaused() {
+				s.timer.SetPause()
+			} else {
+				s.timer.Start()
+			}
+		}
+		if t.Keysym.Sym == sdl.K_RETURN && t.State == sdl.RELEASED {
+			s.timer.Reset()
+		}
 	case *sdl.WindowEvent:
 		switch t.Event {
 		case sdl.WINDOWEVENT_RESIZED:
@@ -90,12 +101,12 @@ func (s *Screen) Event() {
 	}
 }
 func (s *Screen) Update() {
-	_, _, minute, hour := getTime()
+	_, second, minute, hour := s.timer.GetTimer()
 	lblStr := ""
 	if s.blinkTimer.IsOn() {
-		lblStr = fmt.Sprintf("%02d:%02d", hour, minute)
+		lblStr = fmt.Sprintf("%02d:%02d:%02d", hour, minute, second)
 	} else {
-		lblStr = fmt.Sprintf("%02d %02d", hour, minute)
+		lblStr = fmt.Sprintf("%02d %02d %02d", hour, minute, second)
 	}
 	s.lblTime.SetText(lblStr)
 	s.analogClock.Update()
@@ -118,6 +129,9 @@ func (s *Screen) Render() {
 }
 func (s *Screen) quit() { s.running = false }
 func (s *Screen) Run() {
+	s.timer = NewTimer()
+	s.timer.Reset()
+	go s.timer.Run()
 	s.blinkTimer = &BlinkTimer{}
 	go s.blinkTimer.Run()
 	s.setup()

@@ -6,6 +6,8 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+type GetTime func() (int, int, int, int)
+
 type AnalogClock struct {
 	renderer                                   *sdl.Renderer
 	rect                                       sdl.Rect
@@ -15,9 +17,10 @@ type AnalogClock struct {
 	drawMsec                                   bool
 	tweentyBlinkTimer                          *BlinkTimer
 	tipTweentyPoint                            sdl.Point
+	fn                                         GetTime
 }
 
-func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, tweentyPointColor, bg sdl.Color, blinkTimer *BlinkTimer) *AnalogClock {
+func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, tweentyPointColor, bg sdl.Color, blinkTimer *BlinkTimer, fn GetTime) *AnalogClock {
 	texFace := NewClockFace(renderer, rect, fg, bg)
 	rectWidth, rectHeight := int32(float64(rect.H)*0.470), int32(float64(rect.H)*0.02)
 	mSecHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1), rectHeight / 2}, sdl.Point{int32(float64(rectHeight) * 0.2), rectHeight / 4}, secHandColor, bg)
@@ -38,6 +41,7 @@ func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, twe
 		mSecHand:          mSecHand,
 		tweentyBlinkTimer: blinkTimer,
 		tipTweentyPoint:   tipTweentyPoint,
+		fn:                fn,
 	}
 }
 
@@ -57,7 +61,7 @@ func (s *AnalogClock) Render(renderer *sdl.Renderer) {
 }
 
 func (s *AnalogClock) Update() {
-	mSec, sec, minute, hour := getTime()
+	mSec, sec, minute, hour := s.fn()
 	s.mSecHand.Update(float64(mSec) / 1000.0)
 	s.secondHand.Update((float64(sec) + s.mSecHand.GetFraction()) / 60.0)
 	s.minuteHand.Update((float64(minute) + s.secondHand.GetFraction()) / 60.0)
