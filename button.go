@@ -28,7 +28,7 @@ func NewButton(renderer *sdl.Renderer, str string, rect sdl.Rect, fg, bg sdl.Col
 func newButtonTexture(renderer *sdl.Renderer, str string, rect sdl.Rect, fg, bg sdl.Color, font *ttf.Font, pressed bool) *sdl.Texture {
 	labelTexture := newLabelTexture(str, fg, renderer, font)
 	defer labelTexture.Destroy()
-	buttonTexture, err := renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H)
+	buttonTexture, err := renderer.CreateTexture(sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H)
 	if err != nil {
 		panic(err)
 	}

@@ -34,7 +34,7 @@ type Screen struct {
 	running                bool
 	bg, fg                 sdl.Color
 	fpsCountTime, fpsCount uint32
-	lblTime                *Label
+	lblTime, lblTitle      *Label
 	btnClock, btnTimer     *Button
 	blinkTimer             *BlinkTimer
 	analogClock            *AnalogClock
@@ -62,11 +62,15 @@ func (s *Screen) setup() {
 	if err != nil {
 		panic(err)
 	}
+
+	s.lblTitle = NewLabel(s.title, sdl.Point{0, 0}, s.fg, s.renderer, s.font)
+	s.sprites = append(s.sprites, s.lblTitle)
+
 	s.lblTime = NewLabel("--:--:--", sdl.Point{0, 0}, s.fg, s.renderer, s.font)
-	s.sprites = append(s.sprites, s.lblTime)
 	lblRect := s.lblTime.GetSize()
 	lblPos := sdl.Point{s.width/2 - lblRect.W/2, s.height - lblRect.H}
 	s.lblTime.SetPos(lblPos)
+	s.sprites = append(s.sprites, s.lblTime)
 
 	s.btnClock = NewButton(s.renderer, "Clock", sdl.Rect{0, s.height - lblRect.H, lblRect.H * 3, lblRect.H}, s.fg, s.bg, s.font)
 	s.sprites = append(s.sprites, s.btnClock)
@@ -156,12 +160,14 @@ func (s *Screen) Event() {
 
 func (s *Screen) selectClock() {
 	s.fnTime = getTime
+	s.title = "Clock"
 	s.Destroy()
 	s.setup()
 }
 
 func (s *Screen) selectTimer() {
 	s.fnTime = s.timer.GetTimer
+	s.title = "Timer"
 	s.Destroy()
 	s.setup()
 }

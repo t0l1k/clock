@@ -25,6 +25,7 @@ func NewLabel(str string, point sdl.Point, color sdl.Color, renderer *sdl.Render
 		color:    color,
 		renderer: renderer,
 		font:     font,
+		texture:  texture,
 	}
 }
 

@@ -33,7 +33,7 @@ func (s *ClockHand) Destroy()        { s.texture.Destroy() }
 func (s *ClockHand) String()         { fmt.Sprintln("ClockHand:%v %v %v", s.fg, s.bg, s.rect) }
 
 func NewSmallHand(renderer *sdl.Renderer, width, height int32, rect sdl.Rect, center sdl.Point, fg, bg sdl.Color) *ClockHand {
-	texHand, err := renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H)
+	texHand, err := renderer.CreateTexture(sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H)
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +59,7 @@ func NewSmallHand(renderer *sdl.Renderer, width, height int32, rect sdl.Rect, ce
 	}
 }
 func NewBigHand(renderer *sdl.Renderer, width, height int32, rect sdl.Rect, center sdl.Point, fg, bg sdl.Color) *ClockHand {
-	texHand, err := renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H)
+	texHand, err := renderer.CreateTexture(sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H)
 	if err != nil {
 		panic(err)
 	}

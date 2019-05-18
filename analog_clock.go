@@ -77,7 +77,7 @@ func (s *AnalogClock) String() { fmt.Sprintln("AnalogClock:%v %v %v", s.fg, s.bg
 
 func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texClockFace *sdl.Texture) {
 	var err error
-	if texClockFace, err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H); err != nil {
+	if texClockFace, err = renderer.CreateTexture(sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H); err != nil {
 		panic(err)
 	}
 	center := sdl.Point{rect.W / 2, rect.H / 2}
