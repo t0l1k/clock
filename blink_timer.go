@@ -20,4 +20,4 @@ func (s *BlinkTimer) Run() {
 		s.switchOn()
 	}
 }
-func (s *BlinkTimer) Quit() { s.running = false }
+func (s *BlinkTimer) Stop() { s.running = false }

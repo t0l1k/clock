@@ -6,8 +6,6 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type GetTime func() (int, int, int, int)
-
 type AnalogClock struct {
 	renderer                                   *sdl.Renderer
 	rect                                       sdl.Rect
@@ -88,17 +86,12 @@ func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texC
 	texClockFace.SetBlendMode(sdl.BLENDMODE_BLEND)
 	setColor(renderer, bg)
 	renderer.Clear()
-	FillCircle(renderer, center.X, center.Y, rect.H/2, bg)
 	setColor(renderer, sdl.Color{192, 255, 128, 255})
-	// renderer.DrawLine(0, 0, rect.W, rect.H)
-	// renderer.DrawLine(0, rect.H, rect.W, 0)
-	// renderer.DrawLine(rect.W/2, 0, rect.W/2, 0)
-	// renderer.DrawLine(0, rect.H/2, rect.W, rect.H/2)
 	var x, y int32
 	for y = 0; y < rect.H; y += 5 {
 		for x = 0; x < rect.W; x += 5 {
 			renderer.DrawLine(x, 0, x, rect.H)
-			// renderer.DrawLine(0, y, rect.W, y)
+			renderer.DrawLine(0, y, rect.W, y)
 		}
 	}
 	for i := 0; i < 60; i++ {

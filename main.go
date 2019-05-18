@@ -32,13 +32,7 @@ func main() {
 	}
 	defer ttf.Quit()
 
-	font, err := ttf.OpenFont("assets/Roboto-Regular.ttf", int(float64(height)*0.05))
-	if err != nil {
-		panic(err)
-	}
-	defer font.Close()
-
-	app := NewScreen(title, window, renderer, width, height, font)
+	app := NewScreen(title, window, renderer, width, height)
 	defer app.Destroy()
 	app.Run()
 
