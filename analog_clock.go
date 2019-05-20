@@ -73,7 +73,7 @@ func (s *AnalogClock) Destroy() {
 	s.secondHand.Destroy()
 	s.mSecHand.Destroy()
 }
-func (s *AnalogClock) String() { fmt.Sprintln("AnalogClock:%v %v %v", s.fg, s.bg, s.rect) }
+func (s *AnalogClock) String() { fmt.Sprintf("AnalogClock:%v %v %v", s.fg, s.bg, s.rect) }
 
 func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texClockFace *sdl.Texture) {
 	var err error

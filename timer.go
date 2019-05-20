@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"time"
 )
@@ -44,9 +45,7 @@ func (s *Timer) SetPause() {
 
 // Stop остановить таймер
 func (s *Timer) Stop() {
-	if s.running {
-		s.running = false
-	}
+	s.running = false
 }
 
 func (s *Timer) update() int {
@@ -56,7 +55,7 @@ func (s *Timer) update() int {
 // Run запуск экземпляра таймера в отдельной горутине
 func (s *Timer) Run() {
 	for s.running {
-		if s.running && !s.pause {
+		if !s.IsPaused() {
 			var diff int
 			s.nowTick = s.update()
 			if s.nowTick >= s.lastTick {
@@ -65,13 +64,14 @@ func (s *Timer) Run() {
 				diff = int(math.Abs(float64(s.lastTick - s.nowTick - s.lastTick)))
 			}
 			s.mSecond += diff
-			if s.mSecond >= 1000 {
-				s.mSecond -= 1000
+			if s.mSecond > 999 {
+				s.mSecond -= 999
 				s.second++
 			}
+			// fmt.Println("now:", s.nowTick, s.lastTick, diff, s.mSecond, s.second)
 			s.lastTick = s.nowTick
+			time.Sleep(1 * time.Millisecond) // задержка для предотвращения троутлинга
 		}
-		time.Sleep(10 * time.Millisecond) // задержка для предотвращения троутлинга
 	}
 }
 
@@ -81,4 +81,8 @@ func (s *Timer) GetTimer() (int, int, int, int) {
 	minute := s.second % 3600 / 60
 	hour := s.second % 86400 / 3600
 	return s.mSecond, second, minute, hour
+}
+
+func (s *Timer) String() string {
+	return fmt.Sprintf("Timer:%v %v %v %v %v", s.nowTick, s.lastTick, s.mSecond, s.second, s.pause)
 }

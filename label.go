@@ -69,4 +69,4 @@ func (s *Label) Render(renderer *sdl.Renderer) {
 func (s *Label) Update()         {}
 func (s *Label) Event(sdl.Event) {}
 func (s *Label) Destroy()        { s.texture.Destroy() }
-func (s *Label) String()         { fmt.Sprintln("label:%v %v %v", s.str, s.color, s.rect) }
+func (s *Label) String()         { fmt.Sprintf("label:%v %v %v", s.str, s.color, s.rect) }
