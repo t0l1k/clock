@@ -58,7 +58,8 @@ func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, 
 
 func (s *Screen) setup() {
 	var err error
-	s.font, err = ttf.OpenFont("assets/Roboto-Regular.ttf", int(float64(s.height)*0.025))
+	fontSize := int(float64(s.height) * 0.03) // Главная константа перерисовки экрана
+	s.font, err = ttf.OpenFont("assets/Roboto-Regular.ttf", fontSize)
 	if err != nil {
 		panic(err)
 	}

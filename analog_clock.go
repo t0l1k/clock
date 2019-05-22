@@ -22,7 +22,7 @@ func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, twe
 	texFace := NewClockFace(renderer, rect, fg, bg)
 	rectWidth, rectHeight := int32(float64(rect.H)*0.470), int32(float64(rect.H)*0.02)
 	mSecHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1), rectHeight / 2}, sdl.Point{int32(float64(rectHeight) * 0.2), rectHeight / 4}, secHandColor, bg)
-	secondHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1.19), rectHeight / 2}, sdl.Point{int32(float64(rectWidth) * 0.2), rectHeight / 4}, secHandColor, bg)
+	secondHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1.13), rectHeight / 2}, sdl.Point{int32(float64(rectWidth) * 0.2), rectHeight / 4}, secHandColor, bg)
 	minuteHand := NewBigHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 0.9), rectHeight * 2}, sdl.Point{rectHeight * 2, rectHeight / 2 * 2}, fg, bg)
 	hourHand := NewBigHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 0.7), rectHeight * 2}, sdl.Point{rectHeight * 2, rectHeight / 2 * 2}, fg, bg)
 	tipTweentyPoint := getTip(sdl.Point{rect.W / 2, rect.H / 2}, 0/60, float64(rect.H/2-(rect.H/90)*3), 0, 0)

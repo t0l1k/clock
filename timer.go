@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"time"
 )
 
 // Timer умеет засекать время.
 type Timer struct {
-	nowTick, lastTick, mSecond, second int
-	running, pause                     bool
+	nowTick, startTick time.Time
+	nSecond, second    int64
+	running, pause     bool
 }
 
 // NewTimer создает экземпляр
@@ -17,19 +17,18 @@ func NewTimer() *Timer {
 	return &Timer{}
 }
 
-// Reset обнулить текущее время таймера
+// Reset обнулить таймер
 func (s *Timer) Reset() {
 	s.running = true
 	s.pause = true
-	s.mSecond = 0
+	s.nSecond = 0
 	s.second = 0
-	s.lastTick = s.update()
+	s.startTick = s.update()
 }
 
 // Start старт таймера
 func (s *Timer) Start() {
-	s.lastTick = s.update()
-	s.nowTick = 0
+	s.startTick = s.update()
 	s.pause = false
 }
 
@@ -48,41 +47,36 @@ func (s *Timer) Stop() {
 	s.running = false
 }
 
-func (s *Timer) update() int {
-	return time.Now().Nanosecond() / 1000000
+func (s *Timer) update() time.Time {
+	return time.Now()
 }
 
 // Run запуск экземпляра таймера в отдельной горутине
 func (s *Timer) Run() {
 	for s.running {
 		if !s.IsPaused() {
-			var diff int
 			s.nowTick = s.update()
-			if s.nowTick >= s.lastTick {
-				diff = s.nowTick - s.lastTick
-			} else {
-				diff = int(math.Abs(float64(s.lastTick - s.nowTick - s.lastTick)))
-			}
-			s.mSecond += diff
-			if s.mSecond > 999 {
-				s.mSecond -= 999
+			diff := s.nowTick.Sub(s.startTick).Nanoseconds()
+			s.nSecond += diff
+			if s.nSecond > 1000000000 {
+				s.nSecond -= 1000000000
 				s.second++
 			}
-			// fmt.Println("now:", s.nowTick, s.lastTick, diff, s.mSecond, s.second)
-			s.lastTick = s.nowTick
+			// fmt.Println("now:", s.nowTick, s.lastTick, diff, s.nSecond, s.second)
+			s.startTick = s.nowTick
 			time.Sleep(1 * time.Millisecond) // задержка для предотвращения троутлинга
 		}
 	}
 }
 
-// GetTimer передать сколько текущее время таймера
+// GetTimer передать текущее время таймера
 func (s *Timer) GetTimer() (int, int, int, int) {
 	second := s.second % 60
 	minute := s.second % 3600 / 60
 	hour := s.second % 86400 / 3600
-	return s.mSecond, second, minute, hour
+	return int(s.nSecond / 1000000), int(second), int(minute), int(hour)
 }
 
 func (s *Timer) String() string {
-	return fmt.Sprintf("Timer:%v %v %v %v %v", s.nowTick, s.lastTick, s.mSecond, s.second, s.pause)
+	return fmt.Sprintf("Timer:%v %v %v %v %v", s.nowTick, s.startTick, s.nSecond, s.second, s.pause)
 }
