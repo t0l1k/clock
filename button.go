@@ -14,15 +14,29 @@ type Button struct {
 	fg, bg                            sdl.Color
 	str                               string
 	font                              *ttf.Font
-	focus, pressed, released, show    bool
+	focus, pressed, show              bool
+	fn                                func()
 }
 
-func NewButton(renderer *sdl.Renderer, str string, rect sdl.Rect, fg, bg sdl.Color, font *ttf.Font) *Button {
+func NewButton(renderer *sdl.Renderer, str string, rect sdl.Rect, fg, bg sdl.Color, font *ttf.Font, fn func()) *Button {
 	texFocus := newButtonTexture(renderer, str, rect, fg, bg, font, false)
 	texNotFocus := newButtonTexture(renderer, str, rect, bg, fg, font, false)
 	texPressed := newButtonTexture(renderer, str, rect, fg, bg, font, true)
 	_, _, w, h, _ := texFocus.Query()
-	return &Button{str: str, renderer: renderer, texFocus: texFocus, texNotFocus: texNotFocus, texPressed: texPressed, rect: sdl.Rect{rect.X, rect.Y, w, h}, fg: fg, bg: bg, font: font, focus: false, show: true}
+	return &Button{
+		str:         str,
+		renderer:    renderer,
+		texFocus:    texFocus,
+		texNotFocus: texNotFocus,
+		texPressed:  texPressed,
+		rect:        sdl.Rect{rect.X, rect.Y, w, h},
+		fg:          fg,
+		bg:          bg,
+		font:        font,
+		focus:       false,
+		show:        true,
+		fn:          fn,
+	}
 }
 
 func newButtonTexture(renderer *sdl.Renderer, str string, rect sdl.Rect, fg, bg sdl.Color, font *ttf.Font, pressed bool) *sdl.Texture {
@@ -103,35 +117,25 @@ func (s *Button) Render(renderer *sdl.Renderer) {
 	}
 }
 
-func (s *Button) Update() {}
-
-func (s *Button) IsPressed() bool  { return s.pressed && !s.released }
-func (s *Button) IsReleased() bool { return s.released && !s.pressed }
-
-func (s *Button) Event(e sdl.Event) {
+func (s *Button) Update() {
 	if s.show {
 		x, y, state := sdl.GetMouseState()
 		mousePoint := sdl.Point{x, y}
-		switch e.(type) {
-		case *sdl.MouseMotionEvent:
-			if mousePoint.InRect(&s.rect) {
-				s.focus = true
-			} else {
-				s.focus = false
-			}
-		case *sdl.MouseButtonEvent:
-			if state > 0 && s.focus {
-				s.pressed = true
-				s.released = false
-			} else if state == 0 && s.focus {
-				s.pressed = false
-				s.released = true
-			} else if state == 0 && s.pressed {
-				s.pressed = false
-			}
+		if mousePoint.InRect(&s.rect) {
+			s.focus = true
+		} else {
+			s.focus = false
+		}
+		if s.focus && state > 0 {
+			s.pressed = true
+			s.fn()
+		} else {
+			s.pressed = false
 		}
 	}
 }
+
+func (s *Button) Event(e sdl.Event) {}
 
 func (s *Button) Destroy() {
 	s.texNotFocus.Destroy()

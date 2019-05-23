@@ -73,10 +73,10 @@ func (s *Screen) setup() {
 	s.lblTime.SetPos(lblPos)
 	s.sprites = append(s.sprites, s.lblTime)
 
-	s.btnClock = NewButton(s.renderer, "Clock", sdl.Rect{0, s.height - lblRect.H, lblRect.H * 3, lblRect.H}, s.fg, s.bg, s.font)
+	s.btnClock = NewButton(s.renderer, "Clock", sdl.Rect{0, s.height - lblRect.H, lblRect.H * 3, lblRect.H}, s.fg, s.bg, s.font, s.selectClock)
 	s.sprites = append(s.sprites, s.btnClock)
 
-	s.btnTimer = NewButton(s.renderer, "Timer", sdl.Rect{lblRect.H * 3, s.height - lblRect.H, lblRect.H * 3, lblRect.H}, s.fg, s.bg, s.font)
+	s.btnTimer = NewButton(s.renderer, "Timer", sdl.Rect{lblRect.H * 3, s.height - lblRect.H, lblRect.H * 3, lblRect.H}, s.fg, s.bg, s.font, s.selectTimer)
 	s.sprites = append(s.sprites, s.btnTimer)
 
 	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, lblRect.H, s.height, s.height - lblRect.H*2}, s.fg, sdl.Color{255, 0, 0, 255}, sdl.Color{255, 255, 0, 255}, s.bg, s.blinkTimer, s.fnTime)
@@ -148,12 +148,6 @@ func (s *Screen) Event() {
 			s.setup()
 		}
 	}
-	if s.btnClock.IsReleased() {
-		s.selectClock()
-	}
-	if s.btnTimer.IsReleased() {
-		s.selectTimer()
-	}
 	for _, sprite := range s.sprites {
 		sprite.Event(event)
 	}
@@ -181,6 +175,10 @@ func (s *Screen) setTimerStatePlay() {
 }
 func (s *Screen) setTimerStatePause() {
 	s.timer.SetPause()
+}
+
+func (s *Screen) setTimerLap() {
+
 }
 
 func (s *Screen) Update() {
