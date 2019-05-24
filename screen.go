@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -39,8 +40,11 @@ type Screen struct {
 	blinkTimer             *BlinkTimer
 	analogClock            *AnalogClock
 	timer                  *Timer
+	prevTimer              Timer
 	sprites                []Sprite
 	fnTime                 GetTime
+	laps                   []Lap
+	lapCount               int
 }
 
 func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, height int32) *Screen {
@@ -124,6 +128,7 @@ func (s *Screen) Event() {
 			}
 		}
 		if t.Keysym.Sym == sdl.K_SPACE && t.State == sdl.RELEASED {
+			s.setTimerLap()
 		}
 		if t.Keysym.Sym == sdl.K_F1 && t.State == sdl.RELEASED {
 			s.selectClock()
@@ -169,8 +174,14 @@ func (s *Screen) selectTimer() {
 
 func (s *Screen) setTimerStateBegin() {
 	s.timer.Reset()
+	s.lapCount = 0
+	s.prevTimer = *s.timer
 }
+
 func (s *Screen) setTimerStatePlay() {
+	if !s.timer.IsPaused() {
+		s.prevTimer = *s.timer
+	}
 	s.timer.Start()
 }
 func (s *Screen) setTimerStatePause() {
@@ -178,7 +189,13 @@ func (s *Screen) setTimerStatePause() {
 }
 
 func (s *Screen) setTimerLap() {
-
+	if !s.timer.IsPaused() {
+		s.lapCount++
+		dur, _ := time.ParseDuration(s.timer.String())
+		lap := NewLap(s.lapCount, dur, s.timer.Sub(s.prevTimer).Round(time.Millisecond))
+		fmt.Println(lap)
+		s.prevTimer = *s.timer
+	}
 }
 
 func (s *Screen) Update() {
