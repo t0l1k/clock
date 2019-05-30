@@ -32,7 +32,7 @@ func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, twe
 	hourHand := NewBigHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 0.7), rectHeight * 2}, sdl.Point{rectHeight * 2, rectHeight / 2 * 2}, fg, bg)
 	tipTweentyPoint := getTip(sdl.Point{rect.W / 2, rect.H / 2}, 0/60, float64(rect.H/2-(rect.H/90)*3), 0, 0)
 
-	lblDigTime := NewLabel("--:--:--", sdl.Point{0, 0}, fg, renderer, font)
+	lblDigTime := NewLabel("00:00:00", sdl.Point{0, 0}, fg, renderer, font)
 	lblRect := lblDigTime.GetSize()
 	lblPos := sdl.Point{rect.X + (rect.W-lblRect.W)/2, rect.Y + int32(float64(rect.H)*0.60)}
 	lblDigTime.SetPos(lblPos)

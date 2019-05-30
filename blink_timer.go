@@ -1,23 +1,37 @@
 package main
 
-import (
-	"github.com/veandco/go-sdl2/sdl"
-)
+import "time"
 
+// ver 2019.05.29
 type BlinkTimer struct {
-	DELAY   uint32
+	delay   time.Duration
 	blinkOn bool
 	running bool
 }
 
+func NewBlinkTimer(delay time.Duration) *BlinkTimer {
+	return &BlinkTimer{
+		delay: delay,
+	}
+}
+
 func (s *BlinkTimer) IsOn() bool { return s.blinkOn }
-func (s *BlinkTimer) switchOn()  { s.blinkOn = !s.blinkOn }
+
+func (s *BlinkTimer) switchOn() { s.blinkOn = !s.blinkOn }
+
 func (s *BlinkTimer) Run() {
-	s.DELAY = 1000 / 2
 	s.running = true
 	for s.running {
-		sdl.Delay(s.DELAY)
+		time.Sleep(s.delay)
 		s.switchOn()
 	}
 }
-func (s *BlinkTimer) Stop() { s.running = false }
+
+func (s *BlinkTimer) Start() {
+	s.running = true
+}
+
+func (s *BlinkTimer) Stop() {
+	s.blinkOn = true
+	s.running = false
+}
