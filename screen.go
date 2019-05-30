@@ -35,28 +35,36 @@ type Screen struct {
 	running                bool
 	bg, fg                 sdl.Color
 	fpsCountTime, fpsCount uint32
-	lblTime, lblTitle      *Label
+	lblTitle               *Label
 	btnClock, btnTimer     *Button
 	blinkTimer             *BlinkTimer
 	analogClock            *AnalogClock
 	timer                  *Timer
 	prevTimer              Timer
 	sprites                []Sprite
-	fnTime                 GetTime
+	fnAnalog, fnDigit      GetTime
 	laps                   []Lap
 	lapCount               int
 }
 
 func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, height int32) *Screen {
+	timer := NewTimer()
+	timer.Reset()
+	go timer.Run()
+	blinkTimer := &BlinkTimer{}
+	go blinkTimer.Run()
 	return &Screen{
-		title:    title,
-		window:   window,
-		renderer: renderer,
-		width:    width,
-		height:   height,
-		bg:       sdl.Color{192, 192, 192, 0},
-		fg:       sdl.Color{0, 0, 0, 255},
-		fnTime:   getTime,
+		title:      title,
+		window:     window,
+		renderer:   renderer,
+		width:      width,
+		height:     height,
+		bg:         sdl.Color{192, 192, 192, 0},
+		fg:         sdl.Color{0, 0, 0, 255},
+		fnAnalog:   getTime,
+		fnDigit:    timer.GetTimer,
+		timer:      timer,
+		blinkTimer: blinkTimer,
 	}
 }
 
@@ -69,13 +77,8 @@ func (s *Screen) setup() {
 	}
 
 	s.lblTitle = NewLabel(s.title, sdl.Point{0, 0}, s.fg, s.renderer, s.font)
+	lblRect := s.lblTitle.GetSize()
 	s.sprites = append(s.sprites, s.lblTitle)
-
-	s.lblTime = NewLabel("--:--:--", sdl.Point{0, 0}, s.fg, s.renderer, s.font)
-	lblRect := s.lblTime.GetSize()
-	lblPos := sdl.Point{s.width/2 - lblRect.W/2, s.height - lblRect.H}
-	s.lblTime.SetPos(lblPos)
-	s.sprites = append(s.sprites, s.lblTime)
 
 	s.btnClock = NewButton(s.renderer, "Clock", sdl.Rect{0, s.height - lblRect.H, lblRect.H * 3, lblRect.H}, s.fg, s.bg, s.font, s.selectClock)
 	s.sprites = append(s.sprites, s.btnClock)
@@ -83,7 +86,7 @@ func (s *Screen) setup() {
 	s.btnTimer = NewButton(s.renderer, "Timer", sdl.Rect{lblRect.H * 3, s.height - lblRect.H, lblRect.H * 3, lblRect.H}, s.fg, s.bg, s.font, s.selectTimer)
 	s.sprites = append(s.sprites, s.btnTimer)
 
-	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, lblRect.H, s.height, s.height - lblRect.H*2}, s.fg, sdl.Color{255, 0, 0, 255}, sdl.Color{255, 255, 0, 255}, s.bg, s.blinkTimer, s.fnTime)
+	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, lblRect.H, s.height, s.height - lblRect.H*2}, s.fg, sdl.Color{255, 0, 0, 255}, sdl.Color{255, 255, 0, 255}, s.bg, s.font, s.blinkTimer, s.fnAnalog, s.fnDigit, s.blinkTimer.IsOn)
 	s.sprites = append(s.sprites, s.analogClock)
 }
 
@@ -159,14 +162,16 @@ func (s *Screen) Event() {
 }
 
 func (s *Screen) selectClock() {
-	s.fnTime = getTime
+	s.fnAnalog = getTime
+	s.fnDigit = s.timer.GetTimer
 	s.title = "Clock"
 	s.Destroy()
 	s.setup()
 }
 
 func (s *Screen) selectTimer() {
-	s.fnTime = s.timer.GetTimer
+	s.fnAnalog = s.timer.GetTimer
+	s.fnDigit = getTime
 	s.title = "Timer"
 	s.Destroy()
 	s.setup()
@@ -199,14 +204,6 @@ func (s *Screen) setTimerLap() {
 }
 
 func (s *Screen) Update() {
-	_, second, minute, hour := s.fnTime()
-	lblStr := ""
-	if s.blinkTimer.IsOn() {
-		lblStr = fmt.Sprintf("%02d:%02d:%02d", hour, minute, second)
-	} else {
-		lblStr = fmt.Sprintf("%02d %02d %02d", hour, minute, second)
-	}
-	s.lblTime.SetText(lblStr)
 	for _, sprite := range s.sprites {
 		sprite.Update()
 	}
@@ -227,17 +224,8 @@ func (s *Screen) Render() {
 	s.fpsCount++
 }
 
-func (s *Screen) Init() {
-	s.timer = NewTimer()
-	s.timer.Reset()
-	go s.timer.Run()
-	s.blinkTimer = &BlinkTimer{}
-	go s.blinkTimer.Run()
-	s.setup()
-}
-
 func (s *Screen) Run() {
-	s.Init()
+	s.setup()
 	frameRate := uint32(1000 / 60)
 	lastTime := sdl.GetTicks()
 	s.running = true

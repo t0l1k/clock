@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/veandco/go-sdl2/ttf"
+
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -11,14 +13,17 @@ type AnalogClock struct {
 	rect                                       sdl.Rect
 	texFace                                    *sdl.Texture
 	fg, bg, secHandColor, tweentyPointColor    sdl.Color
+	font                                       *ttf.Font
 	hourHand, minuteHand, secondHand, mSecHand *ClockHand
 	drawMsec                                   bool
 	tweentyBlinkTimer                          *BlinkTimer
 	tipTweentyPoint                            sdl.Point
-	fn                                         GetTime
+	fnAnalog, fnDigit                          GetTime
+	lblDigTime                                 *Label
+	fnBlink                                    func() bool
 }
 
-func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, tweentyPointColor, bg sdl.Color, blinkTimer *BlinkTimer, fn GetTime) *AnalogClock {
+func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, tweentyPointColor, bg sdl.Color, font *ttf.Font, blinkTimer *BlinkTimer, fnAnalog, fnDigit GetTime, fnBlink func() bool) *AnalogClock {
 	texFace := NewClockFace(renderer, rect, fg, bg)
 	rectWidth, rectHeight := int32(float64(rect.H)*0.470), int32(float64(rect.H)*0.02)
 	mSecHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1), rectHeight / 2}, sdl.Point{int32(float64(rectHeight) * 0.2), rectHeight / 4}, secHandColor, bg)
@@ -26,10 +31,17 @@ func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, twe
 	minuteHand := NewBigHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 0.9), rectHeight * 2}, sdl.Point{rectHeight * 2, rectHeight / 2 * 2}, fg, bg)
 	hourHand := NewBigHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 0.7), rectHeight * 2}, sdl.Point{rectHeight * 2, rectHeight / 2 * 2}, fg, bg)
 	tipTweentyPoint := getTip(sdl.Point{rect.W / 2, rect.H / 2}, 0/60, float64(rect.H/2-(rect.H/90)*3), 0, 0)
+
+	lblDigTime := NewLabel("--:--:--", sdl.Point{0, 0}, fg, renderer, font)
+	lblRect := lblDigTime.GetSize()
+	lblPos := sdl.Point{rect.X + (rect.W-lblRect.W)/2, rect.Y + int32(float64(rect.H)*0.60)}
+	lblDigTime.SetPos(lblPos)
+
 	return &AnalogClock{
 		renderer:          renderer,
 		rect:              rect,
 		texFace:           texFace,
+		font:              font,
 		fg:                fg,
 		bg:                bg,
 		tweentyPointColor: tweentyPointColor,
@@ -39,7 +51,10 @@ func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, twe
 		mSecHand:          mSecHand,
 		tweentyBlinkTimer: blinkTimer,
 		tipTweentyPoint:   tipTweentyPoint,
-		fn:                fn,
+		fnAnalog:          fnAnalog,
+		fnDigit:           fnDigit,
+		lblDigTime:        lblDigTime,
+		fnBlink:           fnBlink,
 	}
 }
 
@@ -50,6 +65,7 @@ func (s *AnalogClock) Render(renderer *sdl.Renderer) {
 	if s.tweentyBlinkTimer.IsOn() {
 		FillCircle(s.renderer, s.rect.X+s.tipTweentyPoint.X, s.rect.Y+s.tipTweentyPoint.Y, s.rect.H/200, s.tweentyPointColor)
 	}
+	s.lblDigTime.Render(s.renderer)
 	s.hourHand.Render(s.renderer)
 	s.minuteHand.Render(s.renderer)
 	s.secondHand.Render(s.renderer)
@@ -59,14 +75,25 @@ func (s *AnalogClock) Render(renderer *sdl.Renderer) {
 }
 
 func (s *AnalogClock) Update() {
-	mSec, sec, minute, hour := s.fn()
+	mSec, second, minute, hour := s.fnAnalog()
 	s.mSecHand.Update(float64(mSec) / 1000.0)
-	s.secondHand.Update((float64(sec) + s.mSecHand.GetFraction()) / 60.0)
+	s.secondHand.Update((float64(second) + s.mSecHand.GetFraction()) / 60.0)
 	s.minuteHand.Update((float64(minute) + s.secondHand.GetFraction()) / 60.0)
 	s.hourHand.Update((float64(hour) + s.minuteHand.GetFraction()) / 12.0)
+
+	mSec, second, minute, hour = s.fnDigit()
+	lblStr := ""
+	if s.fnBlink() {
+		lblStr = fmt.Sprintf("%02d:%02d:%02d", hour, minute, second)
+	} else {
+		lblStr = fmt.Sprintf("%02d %02d %02d", hour, minute, second)
+	}
+	s.lblDigTime.SetText(lblStr)
 }
+
 func (s *AnalogClock) Event(sdl.Event) {}
 func (s *AnalogClock) Destroy() {
+	s.lblDigTime.Destroy()
 	s.texFace.Destroy()
 	s.hourHand.Destroy()
 	s.minuteHand.Destroy()

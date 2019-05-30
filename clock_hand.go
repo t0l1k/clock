@@ -58,6 +58,7 @@ func NewSmallHand(renderer *sdl.Renderer, width, height int32, rect sdl.Rect, ce
 		bg:         bg,
 	}
 }
+
 func NewBigHand(renderer *sdl.Renderer, width, height int32, rect sdl.Rect, center sdl.Point, fg, bg sdl.Color) *ClockHand {
 	texHand, err := renderer.CreateTexture(sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H)
 	if err != nil {
