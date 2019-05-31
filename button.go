@@ -7,6 +7,7 @@ import (
 	"github.com/veandco/go-sdl2/ttf"
 )
 
+// ver 2019.05.29
 type Button struct {
 	renderer                          *sdl.Renderer
 	texFocus, texNotFocus, texPressed *sdl.Texture
@@ -48,7 +49,6 @@ func newButtonTexture(renderer *sdl.Renderer, str string, rect sdl.Rect, fg, bg 
 	}
 	_, _, w, h, _ := labelTexture.Query()
 	labelRect := sdl.Rect{(rect.W - w) / 2, (rect.H - h) / 2, w, h}
-
 	renderer.SetRenderTarget(buttonTexture)
 	renderer.SetDrawColor(bg.R, bg.G, bg.B, bg.A)
 	renderer.Clear()
@@ -61,6 +61,10 @@ func newButtonTexture(renderer *sdl.Renderer, str string, rect sdl.Rect, fg, bg 
 	}
 	renderer.SetRenderTarget(nil)
 	return buttonTexture
+}
+
+func (s *Button) GetText() string {
+	return s.str
 }
 
 func (s *Button) SetText(str string) {
@@ -99,6 +103,10 @@ func (s *Button) SetPos(pos sdl.Point) {
 	s.rect.Y = pos.Y
 }
 
+func (s *Button) IsPressed() bool {
+	return s.pressed
+}
+
 func (s *Button) Render(renderer *sdl.Renderer) {
 	if s.show {
 		if s.focus && !s.pressed {
@@ -128,8 +136,8 @@ func (s *Button) Update() {
 		}
 		if s.focus && state > 0 {
 			s.pressed = true
+		} else if s.focus && state == 0 && s.pressed {
 			s.fn()
-		} else {
 			s.pressed = false
 		}
 	}

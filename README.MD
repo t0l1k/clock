@@ -4,5 +4,6 @@ F1 выбрать часы
 F2 выбрать таймер
 r обнулить таймер
 Return старт/пауза таймера
+Space Отметить выполненый круг
 
 <img alt="demo screenshot" src="assets/clock.png" width="400"/>

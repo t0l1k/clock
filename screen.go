@@ -51,7 +51,7 @@ func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, 
 	timer := NewTimer()
 	timer.Reset()
 	go timer.Run()
-	blinkTimer := &BlinkTimer{}
+	blinkTimer := NewBlinkTimer(time.Second / 2)
 	go blinkTimer.Run()
 	return &Screen{
 		title:      title,
