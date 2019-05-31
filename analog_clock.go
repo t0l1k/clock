@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/veandco/go-sdl2/ttf"
-
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/ttf"
 )
 
 type AnalogClock struct {
@@ -33,7 +32,7 @@ func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, twe
 
 	lblDigTime := NewLabel("00:00:00", sdl.Point{0, 0}, fg, renderer, font)
 	lblRect := lblDigTime.GetSize()
-	lblPos := sdl.Point{rect.X + (rect.W-lblRect.W)/2, rect.Y + int32(float64(rect.H)*0.60)}
+	lblPos := sdl.Point{rect.X + (rect.W-lblRect.W)/2, rect.Y + int32(float64(rect.H)*0.25)}
 	lblDigTime.SetPos(lblPos)
 
 	return &AnalogClock{
@@ -111,7 +110,7 @@ func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texC
 	texClockFace.SetBlendMode(sdl.BLENDMODE_BLEND)
 	setColor(renderer, bg)
 	renderer.Clear()
-	setColor(renderer, sdl.Color{192, 255, 128, 255})
+	setColor(renderer, sdl.Color{128, 255, 255, 255})
 	var x, y int32
 	for y = 0; y < rect.H; y += 5 {
 		for x = 0; x < rect.W; x += 5 {

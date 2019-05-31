@@ -5,20 +5,20 @@ import (
 	"time"
 )
 
-// Timer умеет засекать время.
-type Timer struct {
+// StopWatch умеет засекать время.
+type StopWatch struct {
 	startTick       time.Time
 	nSecond, second int64
 	running, pause  bool
 }
 
-// NewTimer создает экземпляр
-func NewTimer() *Timer {
-	return &Timer{}
+// NewStopWatch создает экземпляр
+func NewStopWatch() *StopWatch {
+	return &StopWatch{}
 }
 
 // Reset обнулить таймер
-func (s *Timer) Reset() {
+func (s *StopWatch) Reset() {
 	s.running = true
 	s.pause = true
 	s.nSecond = 0
@@ -27,32 +27,32 @@ func (s *Timer) Reset() {
 }
 
 // Start старт таймера
-func (s *Timer) Start() {
+func (s *StopWatch) Start() {
 	s.startTick = s.update()
 	s.pause = false
 }
 
 // IsPaused проверить установлена ли пауза
-func (s *Timer) IsPaused() bool {
+func (s *StopWatch) IsPaused() bool {
 	return s.pause
 }
 
 // SetPause поставить таймер на паузу
-func (s *Timer) SetPause() {
+func (s *StopWatch) SetPause() {
 	s.pause = true
 }
 
 // Stop остановить таймер
-func (s *Timer) Stop() {
+func (s *StopWatch) Stop() {
 	s.running = false
 }
 
-func (s *Timer) update() time.Time {
+func (s *StopWatch) update() time.Time {
 	return time.Now()
 }
 
 // Run запуск экземпляра таймера в отдельной горутине
-func (s *Timer) Run() {
+func (s *StopWatch) Run() {
 	for s.running {
 		if !s.IsPaused() {
 			nowTick := s.update()
@@ -69,20 +69,20 @@ func (s *Timer) Run() {
 	}
 }
 
-func (s *Timer) Sub(u Timer) time.Duration {
+func (s *StopWatch) Sub(u StopWatch) time.Duration {
 	return time.Duration(s.second-u.second)*time.Second + time.Duration(s.nSecond-u.nSecond)
 }
 
-// GetTimer передать текущее время таймера
-func (s *Timer) GetTimer() (int, int, int, int) {
+// GetStopWatch передать текущее время таймера
+func (s *StopWatch) GetStopWatch() (int, int, int, int) {
 	second := s.second % 60
 	minute := s.second % 3600 / 60
 	hour := s.second % 86400 / 3600
 	return int(s.nSecond / 1000000), int(second), int(minute), int(hour)
 }
 
-func (s *Timer) String() (str string) {
-	mS, sec, m, h := s.GetTimer()
+func (s *StopWatch) String() (str string) {
+	mS, sec, m, h := s.GetStopWatch()
 	if h > 0 {
 		str = fmt.Sprintf("%02vh%02vm%02vs%03vms", h, m, sec, mS)
 	} else if h == 0 && m > 0 {

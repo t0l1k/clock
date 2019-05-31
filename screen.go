@@ -17,12 +17,12 @@ type Sprite interface {
 
 type GetTime func() (int, int, int, int)
 
-type timerState int8
+type stopWatchState int8
 
 const (
-	timerBegin timerState = iota
-	timerPlay
-	timerPause
+	stopWatchBegin stopWatchState = iota
+	stopWatchPlay
+	stopWatchPause
 )
 
 type Screen struct {
@@ -33,24 +33,24 @@ type Screen struct {
 	font                   *ttf.Font
 	flags                  uint32
 	running                bool
-	bg, fg                 sdl.Color
+	bg, fg, lineBg         sdl.Color
 	fpsCountTime, fpsCount uint32
 	blinkTimer             *BlinkTimer
-	analogClock            *AnalogClock
-	timer                  *Timer
-	prevTimer              Timer
+	stopWatch              *StopWatch
+	prevStopWatch          StopWatch
 	sprites                []Sprite
 	fnAnalog, fnDigit      GetTime
 	laps                   []Lap
 	lapCount               int
 	menuLine               *MenuLine
+	analogClock            *AnalogClock
 	statusLine             *StatusLine
 }
 
 func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, height int32) *Screen {
-	timer := NewTimer()
-	timer.Reset()
-	go timer.Run()
+	stopWatch := NewStopWatch()
+	stopWatch.Reset()
+	go stopWatch.Run()
 	blinkTimer := NewBlinkTimer(1000 / 2)
 	go blinkTimer.Run()
 	return &Screen{
@@ -61,9 +61,10 @@ func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, 
 		height:     height,
 		bg:         sdl.Color{192, 192, 192, 0},
 		fg:         sdl.Color{0, 0, 0, 255},
+		lineBg:     sdl.Color{128, 128, 128, 0},
 		fnAnalog:   getTime,
-		fnDigit:    timer.GetTimer,
-		timer:      timer,
+		fnDigit:    stopWatch.GetStopWatch,
+		stopWatch:  stopWatch,
 		blinkTimer: blinkTimer,
 	}
 }
@@ -76,13 +77,35 @@ func (s *Screen) setup() {
 		panic(err)
 	}
 	lineHeight := int32(float64(fontSize) * 1.5)
-	s.menuLine = NewMenuLine(s.title, sdl.Rect{0, 0, s.width, lineHeight}, s.fg, s.bg, s.renderer, s.font, func() { s.quit() })
+	s.menuLine = NewMenuLine(
+		s.title,
+		sdl.Rect{0, 0, s.width, lineHeight},
+		s.fg,
+		s.lineBg,
+		s.renderer,
+		s.font,
+		func() { s.quit() })
 	s.sprites = append(s.sprites, s.menuLine)
 
-	s.statusLine = NewStatusLine(sdl.Rect{0, s.height - lineHeight, s.width, lineHeight}, s.fg, s.bg, s.renderer, s.font, s.selectClock, s.selectTimer)
+	s.statusLine = NewStatusLine(
+		sdl.Rect{0, s.height - lineHeight, s.width, lineHeight},
+		s.fg,
+		s.lineBg,
+		s.renderer,
+		s.font, s.selectClock, s.selectStopWatch)
 	s.sprites = append(s.sprites, s.statusLine)
 
-	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, lineHeight, s.height, s.height - lineHeight*2}, s.fg, sdl.Color{255, 0, 0, 255}, sdl.Color{255, 255, 0, 255}, s.bg, s.font, s.blinkTimer, s.fnAnalog, s.fnDigit)
+	s.analogClock = NewAnalogClock(
+		s.renderer,
+		sdl.Rect{(s.width - s.height) / 2, lineHeight, s.height, s.height - lineHeight*2},
+		s.fg,
+		sdl.Color{255, 0, 0, 255},
+		s.bg,
+		s.bg,
+		s.font,
+		s.blinkTimer,
+		s.fnAnalog,
+		s.fnDigit)
 	s.sprites = append(s.sprites, s.analogClock)
 }
 
@@ -117,17 +140,17 @@ func (s *Screen) Event() {
 			s.setMode()
 		}
 		if t.Keysym.Sym == sdl.K_r && t.State == sdl.RELEASED {
-			s.setTimerStateBegin()
+			s.setStopWatchStateBegin()
 		}
 		if t.Keysym.Sym == sdl.K_RETURN && t.State == sdl.RELEASED {
-			if !s.timer.IsPaused() {
-				s.setTimerStatePause()
+			if !s.stopWatch.IsPaused() {
+				s.setStopWatchStatePause()
 			} else {
-				s.setTimerStatePlay()
+				s.setStopWatchStatePlay()
 			}
 		}
 		if t.Keysym.Sym == sdl.K_SPACE && t.State == sdl.RELEASED {
-			s.setTimerLap()
+			s.setStopWatchLap()
 		}
 	case *sdl.WindowEvent:
 		switch t.Event {
@@ -153,43 +176,43 @@ func (s *Screen) Event() {
 
 func (s *Screen) selectClock() {
 	s.fnAnalog = getTime
-	s.fnDigit = s.timer.GetTimer
+	s.fnDigit = s.stopWatch.GetStopWatch
 	s.title = "Clock"
 	s.Destroy()
 	s.setup()
 }
 
-func (s *Screen) selectTimer() {
-	s.fnAnalog = s.timer.GetTimer
+func (s *Screen) selectStopWatch() {
+	s.fnAnalog = s.stopWatch.GetStopWatch
 	s.fnDigit = getTime
-	s.title = "Timer"
+	s.title = "StopWatch"
 	s.Destroy()
 	s.setup()
 }
 
-func (s *Screen) setTimerStateBegin() {
-	s.timer.Reset()
+func (s *Screen) setStopWatchStateBegin() {
+	s.stopWatch.Reset()
 	s.lapCount = 0
-	s.prevTimer = *s.timer
+	s.prevStopWatch = *s.stopWatch
 }
 
-func (s *Screen) setTimerStatePlay() {
-	if !s.timer.IsPaused() {
-		s.prevTimer = *s.timer
+func (s *Screen) setStopWatchStatePlay() {
+	if !s.stopWatch.IsPaused() {
+		s.prevStopWatch = *s.stopWatch
 	}
-	s.timer.Start()
+	s.stopWatch.Start()
 }
-func (s *Screen) setTimerStatePause() {
-	s.timer.SetPause()
+func (s *Screen) setStopWatchStatePause() {
+	s.stopWatch.SetPause()
 }
 
-func (s *Screen) setTimerLap() {
-	if !s.timer.IsPaused() {
+func (s *Screen) setStopWatchLap() {
+	if !s.stopWatch.IsPaused() {
 		s.lapCount++
-		dur, _ := time.ParseDuration(s.timer.String())
-		lap := NewLap(s.lapCount, dur, s.timer.Sub(s.prevTimer).Round(time.Millisecond))
+		dur, _ := time.ParseDuration(s.stopWatch.String())
+		lap := NewLap(s.lapCount, dur, s.stopWatch.Sub(s.prevStopWatch).Round(time.Millisecond))
 		fmt.Println(lap)
-		s.prevTimer = *s.timer
+		s.prevStopWatch = *s.stopWatch
 	}
 }
 
@@ -254,6 +277,6 @@ func (s *Screen) Destroy() {
 
 func (s *Screen) quit() {
 	s.blinkTimer.Stop()
-	s.timer.Stop()
+	s.stopWatch.Stop()
 	s.running = false
 }

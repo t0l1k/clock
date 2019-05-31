@@ -6,27 +6,27 @@ import (
 )
 
 type StatusLine struct {
-	rect             sdl.Rect
-	fg, bg           sdl.Color
-	sprites          []Sprite
-	fnClock, fnTimer func()
+	rect                 sdl.Rect
+	fg, bg               sdl.Color
+	sprites              []Sprite
+	fnClock, fnStopWatch func()
 }
 
-func NewStatusLine(rect sdl.Rect, fg, bg sdl.Color, renderer *sdl.Renderer, font *ttf.Font, fnClock, fnTimer func()) *StatusLine {
+func NewStatusLine(rect sdl.Rect, fg, bg sdl.Color, renderer *sdl.Renderer, font *ttf.Font, fnClock, fnStopWatch func()) *StatusLine {
 	var sprites []Sprite
-	btnClock := NewButton(renderer, "Clock", sdl.Rect{rect.X, rect.Y, rect.H * 3, rect.H}, fg, bg, font, fnClock)
+	btnClock := NewButton(renderer, "Clock", sdl.Rect{rect.X, rect.Y, rect.H * 4, rect.H}, fg, bg, font, fnClock)
 	sprites = append(sprites, btnClock)
 
-	btnTimer := NewButton(renderer, "Timer", sdl.Rect{rect.X + rect.H*3, rect.Y, rect.H * 3, rect.H}, fg, bg, font, fnTimer)
-	sprites = append(sprites, btnTimer)
+	btnStopWatch := NewButton(renderer, "StopWatch", sdl.Rect{rect.X + rect.H*4, rect.Y, rect.H * 4, rect.H}, fg, bg, font, fnStopWatch)
+	sprites = append(sprites, btnStopWatch)
 
 	return &StatusLine{
-		rect:    rect,
-		fg:      fg,
-		bg:      bg,
-		sprites: sprites,
-		fnClock: fnClock,
-		fnTimer: fnTimer,
+		rect:        rect,
+		fg:          fg,
+		bg:          bg,
+		sprites:     sprites,
+		fnClock:     fnClock,
+		fnStopWatch: fnStopWatch,
 	}
 }
 
@@ -52,7 +52,7 @@ func (s *StatusLine) Event(e sdl.Event) {
 			s.fnClock()
 		}
 		if t.Keysym.Sym == sdl.K_F2 && t.State == sdl.RELEASED {
-			s.fnTimer()
+			s.fnStopWatch()
 		}
 	}
 	for _, sprite := range s.sprites {
