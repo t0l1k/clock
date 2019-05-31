@@ -35,7 +35,6 @@ type Screen struct {
 	running                bool
 	bg, fg                 sdl.Color
 	fpsCountTime, fpsCount uint32
-	lblTitle               *Label
 	btnClock, btnTimer     *Button
 	blinkTimer             *BlinkTimer
 	analogClock            *AnalogClock
@@ -45,6 +44,7 @@ type Screen struct {
 	fnAnalog, fnDigit      GetTime
 	laps                   []Lap
 	lapCount               int
+	menuLine               *MenuLine
 }
 
 func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, height int32) *Screen {
@@ -75,18 +75,17 @@ func (s *Screen) setup() {
 	if err != nil {
 		panic(err)
 	}
+	lineHeight := int32(float64(fontSize) * 1.5)
+	s.menuLine = NewMenuLine(s.title, sdl.Rect{0, 0, s.width, lineHeight}, s.fg, s.bg, s.renderer, s.font, func() { s.quit() })
+	s.sprites = append(s.sprites, s.menuLine)
 
-	s.lblTitle = NewLabel(s.title, sdl.Point{0, 0}, s.fg, s.renderer, s.font)
-	lblRect := s.lblTitle.GetSize()
-	s.sprites = append(s.sprites, s.lblTitle)
-
-	s.btnClock = NewButton(s.renderer, "Clock", sdl.Rect{0, s.height - lblRect.H, lblRect.H * 3, lblRect.H}, s.fg, s.bg, s.font, s.selectClock)
+	s.btnClock = NewButton(s.renderer, "Clock", sdl.Rect{0, s.height - lineHeight, lineHeight * 3, lineHeight}, s.fg, s.bg, s.font, s.selectClock)
 	s.sprites = append(s.sprites, s.btnClock)
 
-	s.btnTimer = NewButton(s.renderer, "Timer", sdl.Rect{lblRect.H * 3, s.height - lblRect.H, lblRect.H * 3, lblRect.H}, s.fg, s.bg, s.font, s.selectTimer)
+	s.btnTimer = NewButton(s.renderer, "Timer", sdl.Rect{lineHeight * 3, s.height - lineHeight, lineHeight * 3, lineHeight}, s.fg, s.bg, s.font, s.selectTimer)
 	s.sprites = append(s.sprites, s.btnTimer)
 
-	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, lblRect.H, s.height, s.height - lblRect.H*2}, s.fg, sdl.Color{255, 0, 0, 255}, sdl.Color{255, 255, 0, 255}, s.bg, s.font, s.blinkTimer, s.fnAnalog, s.fnDigit, s.blinkTimer.IsOn)
+	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, lineHeight, s.height, s.height - lineHeight*2}, s.fg, sdl.Color{255, 0, 0, 255}, sdl.Color{255, 255, 0, 255}, s.bg, s.font, s.blinkTimer, s.fnAnalog, s.fnDigit, s.blinkTimer.IsOn)
 	s.sprites = append(s.sprites, s.analogClock)
 }
 
