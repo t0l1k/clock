@@ -1,5 +1,6 @@
 package main
 
+// ver 2019.05.28
 import (
 	"fmt"
 
@@ -45,14 +46,25 @@ func newLabelTexture(str string, color sdl.Color, renderer *sdl.Renderer, font *
 	return texture
 }
 
+func (s *Label) GetTexture() *sdl.Texture {
+	return s.texture
+}
+
 func (s *Label) SetText(str string) {
 	s.texture.Destroy()
 	s.str = str
 	s.texture = newLabelTexture(s.str, s.color, s.renderer, s.font)
+	_, _, w, h, _ := s.texture.Query()
+	s.SetSize(w, h)
 }
 
 func (s *Label) GetSize() sdl.Rect {
 	return s.rect
+}
+
+func (s *Label) SetSize(w, h int32) {
+	s.rect.W = w
+	s.rect.H = h
 }
 
 func (s *Label) SetPos(pos sdl.Point) {

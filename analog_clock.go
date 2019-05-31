@@ -20,10 +20,9 @@ type AnalogClock struct {
 	tipTweentyPoint                            sdl.Point
 	fnAnalog, fnDigit                          GetTime
 	lblDigTime                                 *Label
-	fnBlink                                    func() bool
 }
 
-func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, tweentyPointColor, bg sdl.Color, font *ttf.Font, blinkTimer *BlinkTimer, fnAnalog, fnDigit GetTime, fnBlink func() bool) *AnalogClock {
+func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, tweentyPointColor, bg sdl.Color, font *ttf.Font, blinkTimer *BlinkTimer, fnAnalog, fnDigit GetTime) *AnalogClock {
 	texFace := NewClockFace(renderer, rect, fg, bg)
 	rectWidth, rectHeight := int32(float64(rect.H)*0.470), int32(float64(rect.H)*0.02)
 	mSecHand := NewSmallHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 1), rectHeight / 2}, sdl.Point{int32(float64(rectHeight) * 0.2), rectHeight / 4}, secHandColor, bg)
@@ -32,7 +31,7 @@ func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, twe
 	hourHand := NewBigHand(renderer, rect.W, rect.H, sdl.Rect{rect.X, rect.Y, int32(float64(rectWidth) * 0.7), rectHeight * 2}, sdl.Point{rectHeight * 2, rectHeight / 2 * 2}, fg, bg)
 	tipTweentyPoint := getTip(sdl.Point{rect.W / 2, rect.H / 2}, 0/60, float64(rect.H/2-(rect.H/90)*3), 0, 0)
 
-	lblDigTime := NewLabel("--:--:--", sdl.Point{0, 0}, fg, renderer, font)
+	lblDigTime := NewLabel("00:00:00", sdl.Point{0, 0}, fg, renderer, font)
 	lblRect := lblDigTime.GetSize()
 	lblPos := sdl.Point{rect.X + (rect.W-lblRect.W)/2, rect.Y + int32(float64(rect.H)*0.60)}
 	lblDigTime.SetPos(lblPos)
@@ -54,7 +53,6 @@ func NewAnalogClock(renderer *sdl.Renderer, rect sdl.Rect, fg, secHandColor, twe
 		fnAnalog:          fnAnalog,
 		fnDigit:           fnDigit,
 		lblDigTime:        lblDigTime,
-		fnBlink:           fnBlink,
 	}
 }
 
@@ -83,7 +81,7 @@ func (s *AnalogClock) Update() {
 
 	mSec, second, minute, hour = s.fnDigit()
 	lblStr := ""
-	if s.fnBlink() {
+	if s.tweentyBlinkTimer.IsOn() {
 		lblStr = fmt.Sprintf("%02d:%02d:%02d", hour, minute, second)
 	} else {
 		lblStr = fmt.Sprintf("%02d %02d %02d", hour, minute, second)

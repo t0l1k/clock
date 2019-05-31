@@ -35,7 +35,6 @@ type Screen struct {
 	running                bool
 	bg, fg                 sdl.Color
 	fpsCountTime, fpsCount uint32
-	btnClock, btnTimer     *Button
 	blinkTimer             *BlinkTimer
 	analogClock            *AnalogClock
 	timer                  *Timer
@@ -45,13 +44,14 @@ type Screen struct {
 	laps                   []Lap
 	lapCount               int
 	menuLine               *MenuLine
+	statusLine             *StatusLine
 }
 
 func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, height int32) *Screen {
 	timer := NewTimer()
 	timer.Reset()
 	go timer.Run()
-	blinkTimer := &BlinkTimer{}
+	blinkTimer := NewBlinkTimer(1000 / 2)
 	go blinkTimer.Run()
 	return &Screen{
 		title:      title,
@@ -79,13 +79,10 @@ func (s *Screen) setup() {
 	s.menuLine = NewMenuLine(s.title, sdl.Rect{0, 0, s.width, lineHeight}, s.fg, s.bg, s.renderer, s.font, func() { s.quit() })
 	s.sprites = append(s.sprites, s.menuLine)
 
-	s.btnClock = NewButton(s.renderer, "Clock", sdl.Rect{0, s.height - lineHeight, lineHeight * 3, lineHeight}, s.fg, s.bg, s.font, s.selectClock)
-	s.sprites = append(s.sprites, s.btnClock)
+	s.statusLine = NewStatusLine(sdl.Rect{0, s.height - lineHeight, s.width, lineHeight}, s.fg, s.bg, s.renderer, s.font, s.selectClock, s.selectTimer)
+	s.sprites = append(s.sprites, s.statusLine)
 
-	s.btnTimer = NewButton(s.renderer, "Timer", sdl.Rect{lineHeight * 3, s.height - lineHeight, lineHeight * 3, lineHeight}, s.fg, s.bg, s.font, s.selectTimer)
-	s.sprites = append(s.sprites, s.btnTimer)
-
-	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, lineHeight, s.height, s.height - lineHeight*2}, s.fg, sdl.Color{255, 0, 0, 255}, sdl.Color{255, 255, 0, 255}, s.bg, s.font, s.blinkTimer, s.fnAnalog, s.fnDigit, s.blinkTimer.IsOn)
+	s.analogClock = NewAnalogClock(s.renderer, sdl.Rect{(s.width - s.height) / 2, lineHeight, s.height, s.height - lineHeight*2}, s.fg, sdl.Color{255, 0, 0, 255}, sdl.Color{255, 255, 0, 255}, s.bg, s.font, s.blinkTimer, s.fnAnalog, s.fnDigit)
 	s.sprites = append(s.sprites, s.analogClock)
 }
 
@@ -131,12 +128,6 @@ func (s *Screen) Event() {
 		}
 		if t.Keysym.Sym == sdl.K_SPACE && t.State == sdl.RELEASED {
 			s.setTimerLap()
-		}
-		if t.Keysym.Sym == sdl.K_F1 && t.State == sdl.RELEASED {
-			s.selectClock()
-		}
-		if t.Keysym.Sym == sdl.K_F2 && t.State == sdl.RELEASED {
-			s.selectTimer()
 		}
 	case *sdl.WindowEvent:
 		switch t.Event {
@@ -251,8 +242,6 @@ func (s *Screen) Run() {
 			sdl.Delay(lastTime - now)
 		}
 	}
-	s.blinkTimer.Stop()
-	s.timer.Stop()
 }
 
 func (s *Screen) Destroy() {
@@ -263,4 +252,8 @@ func (s *Screen) Destroy() {
 	s.font.Close()
 }
 
-func (s *Screen) quit() { s.running = false }
+func (s *Screen) quit() {
+	s.blinkTimer.Stop()
+	s.timer.Stop()
+	s.running = false
+}

@@ -5,19 +5,29 @@ import (
 )
 
 type BlinkTimer struct {
-	DELAY   uint32
+	delay   uint32
 	blinkOn bool
 	running bool
 }
 
+func NewBlinkTimer(delay uint32) *BlinkTimer {
+	return &BlinkTimer{
+		delay:   delay,
+		running: true,
+	}
+}
+
 func (s *BlinkTimer) IsOn() bool { return s.blinkOn }
-func (s *BlinkTimer) switchOn()  { s.blinkOn = !s.blinkOn }
+
+func (s *BlinkTimer) switchOn() { s.blinkOn = !s.blinkOn }
+
 func (s *BlinkTimer) Run() {
-	s.DELAY = 1000 / 2
-	s.running = true
 	for s.running {
-		sdl.Delay(s.DELAY)
+		sdl.Delay(s.delay)
 		s.switchOn()
 	}
 }
-func (s *BlinkTimer) Stop() { s.running = false }
+
+func (s *BlinkTimer) Stop() {
+	s.running = false
+}

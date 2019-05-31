@@ -6,39 +6,62 @@ import (
 )
 
 type StatusLine struct {
-	rect       sdl.Rect
-	fg, bg     sdl.Color
-	lblMessage *Label
+	rect             sdl.Rect
+	fg, bg           sdl.Color
+	sprites          []Sprite
+	fnClock, fnTimer func()
 }
 
-func NewStatusLine(message string, rect sdl.Rect, fg, bg sdl.Color, renderer *sdl.Renderer, font *ttf.Font) *StatusLine {
-	lblMessage := NewLabel(message, sdl.Point{rect.X + 5, rect.Y}, fg, renderer, font)
+func NewStatusLine(rect sdl.Rect, fg, bg sdl.Color, renderer *sdl.Renderer, font *ttf.Font, fnClock, fnTimer func()) *StatusLine {
+	var sprites []Sprite
+	btnClock := NewButton(renderer, "Clock", sdl.Rect{rect.X, rect.Y, rect.H * 3, rect.H}, fg, bg, font, fnClock)
+	sprites = append(sprites, btnClock)
+
+	btnTimer := NewButton(renderer, "Timer", sdl.Rect{rect.X + rect.H*3, rect.Y, rect.H * 3, rect.H}, fg, bg, font, fnTimer)
+	sprites = append(sprites, btnTimer)
+
 	return &StatusLine{
-		rect:       rect,
-		fg:         fg,
-		bg:         bg,
-		lblMessage: lblMessage,
+		rect:    rect,
+		fg:      fg,
+		bg:      bg,
+		sprites: sprites,
+		fnClock: fnClock,
+		fnTimer: fnTimer,
 	}
-}
-
-func (s *StatusLine) SetMessage(str string) {
-	s.lblMessage.SetText(str)
 }
 
 func (s *StatusLine) Render(renderer *sdl.Renderer) {
 	setColor(renderer, s.bg)
 	renderer.FillRect(&s.rect)
-	s.lblMessage.Render(renderer)
+	for _, sprite := range s.sprites {
+		sprite.Render(renderer)
+	}
 }
 
 func (s *StatusLine) Update() {
-	s.lblMessage.Update()
+	for _, sprite := range s.sprites {
+		sprite.Update()
+	}
 }
 
 func (s *StatusLine) Event(e sdl.Event) {
-	s.lblMessage.Event(e)
+	switch t := e.(type) {
+	case *sdl.KeyboardEvent:
+
+		if t.Keysym.Sym == sdl.K_F1 && t.State == sdl.RELEASED {
+			s.fnClock()
+		}
+		if t.Keysym.Sym == sdl.K_F2 && t.State == sdl.RELEASED {
+			s.fnTimer()
+		}
+	}
+	for _, sprite := range s.sprites {
+		sprite.Event(e)
+	}
 }
 
 func (s *StatusLine) Destroy() {
-	s.lblMessage.Destroy()
+	for _, sprite := range s.sprites {
+		sprite.Destroy()
+	}
 }
