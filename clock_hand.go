@@ -59,6 +59,44 @@ func NewSmallHand(renderer *sdl.Renderer, width, height int32, rect sdl.Rect, ce
 	}
 }
 
+func NewSmallHandRounded(renderer *sdl.Renderer, width, height int32, rect sdl.Rect, center sdl.Point, fg, bg sdl.Color) *ClockHand {
+	texHand, err := renderer.CreateTexture(sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H)
+	if err != nil {
+		panic(err)
+	}
+	renderer.SetRenderTarget(texHand)
+	texHand.SetBlendMode(sdl.BLENDMODE_BLEND)
+	setColor(renderer, bg)
+	renderer.Clear()
+	// setColor(renderer, sdl.Color{0, 0, 255, 64})
+	// renderer.FillRect(&sdl.Rect{0, 0, rect.W, rect.H})
+	setColor(renderer, fg)
+	FillCircle(renderer, rect.H-rect.H/2, rect.H/2, rect.H/2, fg)
+	h := rect.H / 4
+	if h < 1 {
+		h = 1
+	}
+	renderer.FillRect(&sdl.Rect{0, (rect.H - h) / 2, rect.W, h})
+	FillCircle(renderer, int32(float64(rect.W)*0.95), int32(float64(rect.H)/2), int32(float64(rect.H)/2.5), fg)
+	FillCircle(renderer, int32(float64(rect.W)*0.90), int32(float64(rect.H)/2), int32(float64(rect.H)/2.25), fg)
+	FillCircle(renderer, int32(float64(rect.W)*0.85), int32(float64(rect.H)/2), int32(float64(rect.H)/2), fg)
+	// renderer.FillRect(&sdl.Rect{0, 0, center.X - center.X/4, rect.H})
+	// renderer.FillRect(&sdl.Rect{0, rect.H / 3, rect.W, rect.H - rect.H/3*2})
+	FillCircle(renderer, center.X, center.Y, rect.H/5, bg)
+	renderer.SetRenderTarget(nil)
+	paintRect := sdl.Rect{rect.X + width/2 - center.X, rect.Y + height/2 - rect.H/2, rect.W, rect.H}
+
+	return &ClockHand{
+		renderer:   renderer,
+		texture:    texHand,
+		rect:       rect,
+		paintRect:  paintRect,
+		handCenter: center,
+		fg:         fg,
+		bg:         bg,
+	}
+}
+
 func NewBigHand(renderer *sdl.Renderer, width, height int32, rect sdl.Rect, center sdl.Point, fg, bg sdl.Color) *ClockHand {
 	texHand, err := renderer.CreateTexture(sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, rect.W, rect.H)
 	if err != nil {
