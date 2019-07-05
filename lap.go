@@ -6,13 +6,15 @@ import (
 )
 
 type Lap struct {
+	time        time.Time
 	split       int
 	splitLenght time.Duration
 	timerLenght time.Duration
 }
 
-func NewLap(split int, timerLenght, splitLenght time.Duration) *Lap {
-	return &Lap{
+func NewLap(split int, timerLenght, splitLenght time.Duration) Lap {
+	return Lap{
+		time:        time.Now(),
 		split:       split,
 		splitLenght: splitLenght,
 		timerLenght: timerLenght,
@@ -20,5 +22,5 @@ func NewLap(split int, timerLenght, splitLenght time.Duration) *Lap {
 }
 
 func (s *Lap) String() string {
-	return fmt.Sprintf("lap#%v:\tTimer:%v\tSplit:%v", s.split, s.timerLenght, s.splitLenght)
+	return fmt.Sprintf("#%v SW:%v Split:%v", s.split, s.timerLenght, s.splitLenght)
 }

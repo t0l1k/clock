@@ -7,10 +7,6 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-func setColor(renderer *sdl.Renderer, color sdl.Color) {
-	renderer.SetDrawColor(color.R, color.G, color.B, color.A)
-}
-
 func getTime() (int, int, int, int) {
 	mSec := time.Now().Nanosecond() / 1000000
 	sec := time.Now().Second()
@@ -32,15 +28,4 @@ func getAngle(percent float64) float64 {
 	radians := (0.5 - percent) * (2.0 * math.Pi)
 	angle := (radians * -180 / math.Pi) + 90
 	return angle
-}
-
-func FillCircle(renderer *sdl.Renderer, x0, y0, radius int32, color sdl.Color) {
-	setColor(renderer, color)
-	for y := -radius; y <= radius; y++ {
-		for x := -radius; x <= radius; x++ {
-			if x*x+y*y <= radius*radius {
-				renderer.DrawPoint(x0+x, y0+y)
-			}
-		}
-	}
 }

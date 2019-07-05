@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/t0l1k/sdl2/sdl2/ui"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
@@ -15,16 +15,6 @@ type Sprite interface {
 	Destroy()
 }
 
-type GetTime func() (int, int, int, int)
-
-type stopWatchState int8
-
-const (
-	stopWatchBegin stopWatchState = iota
-	stopWatchPlay
-	stopWatchPause
-)
-
 type Screen struct {
 	title                  string
 	window                 *sdl.Window
@@ -35,16 +25,11 @@ type Screen struct {
 	running                bool
 	bg, fg, lineBg         sdl.Color
 	fpsCountTime, fpsCount uint32
+	sprites                []Sprite
 	blinkTimer             *BlinkTimer
 	stopWatch              *StopWatch
-	prevStopWatch          StopWatch
-	sprites                []Sprite
-	fnAnalog, fnDigit      GetTime
-	laps                   []Lap
-	lapCount               int
 	menuLine               *MenuLine
 	analogClock            *AnalogClock
-	statusLine             *StatusLine
 }
 
 func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, height int32) *Screen {
@@ -62,8 +47,6 @@ func NewScreen(title string, window *sdl.Window, renderer *sdl.Renderer, width, 
 		bg:         sdl.Color{192, 192, 192, 0},
 		fg:         sdl.Color{0, 0, 0, 255},
 		lineBg:     sdl.Color{128, 128, 128, 0},
-		fnAnalog:   getTime,
-		fnDigit:    stopWatch.GetStopWatch,
 		stopWatch:  stopWatch,
 		blinkTimer: blinkTimer,
 	}
@@ -87,25 +70,16 @@ func (s *Screen) setup() {
 		func() { s.quit() })
 	s.sprites = append(s.sprites, s.menuLine)
 
-	s.statusLine = NewStatusLine(
-		sdl.Rect{0, s.height - lineHeight, s.width, lineHeight},
-		s.fg,
-		s.lineBg,
-		s.renderer,
-		s.font, s.selectClock, s.selectStopWatch)
-	s.sprites = append(s.sprites, s.statusLine)
-
 	s.analogClock = NewAnalogClock(
 		s.renderer,
-		sdl.Rect{(s.width - s.height) / 2, lineHeight, s.height, s.height - lineHeight*2},
+		sdl.Rect{0, lineHeight, s.width, s.height - lineHeight},
 		s.fg,
 		sdl.Color{255, 0, 0, 255},
 		s.bg,
 		s.bg,
 		s.font,
-		s.blinkTimer,
-		s.fnAnalog,
-		s.fnDigit)
+		s.stopWatch,
+		s.blinkTimer)
 	s.sprites = append(s.sprites, s.analogClock)
 }
 
@@ -139,19 +113,6 @@ func (s *Screen) Event() {
 		if t.Keysym.Sym == sdl.K_F11 && t.State == sdl.RELEASED {
 			s.setMode()
 		}
-		if t.Keysym.Sym == sdl.K_r && t.State == sdl.RELEASED {
-			s.setStopWatchStateBegin()
-		}
-		if t.Keysym.Sym == sdl.K_RETURN && t.State == sdl.RELEASED {
-			if !s.stopWatch.IsPaused() {
-				s.setStopWatchStatePause()
-			} else {
-				s.setStopWatchStatePlay()
-			}
-		}
-		if t.Keysym.Sym == sdl.K_SPACE && t.State == sdl.RELEASED {
-			s.setStopWatchLap()
-		}
 	case *sdl.WindowEvent:
 		switch t.Event {
 		case sdl.WINDOWEVENT_RESIZED:
@@ -174,48 +135,6 @@ func (s *Screen) Event() {
 	}
 }
 
-func (s *Screen) selectClock() {
-	s.fnAnalog = getTime
-	s.fnDigit = s.stopWatch.GetStopWatch
-	s.title = "Clock"
-	s.Destroy()
-	s.setup()
-}
-
-func (s *Screen) selectStopWatch() {
-	s.fnAnalog = s.stopWatch.GetStopWatch
-	s.fnDigit = getTime
-	s.title = "StopWatch"
-	s.Destroy()
-	s.setup()
-}
-
-func (s *Screen) setStopWatchStateBegin() {
-	s.stopWatch.Reset()
-	s.lapCount = 0
-	s.prevStopWatch = *s.stopWatch
-}
-
-func (s *Screen) setStopWatchStatePlay() {
-	if !s.stopWatch.IsPaused() {
-		s.prevStopWatch = *s.stopWatch
-	}
-	s.stopWatch.Start()
-}
-func (s *Screen) setStopWatchStatePause() {
-	s.stopWatch.SetPause()
-}
-
-func (s *Screen) setStopWatchLap() {
-	if !s.stopWatch.IsPaused() {
-		s.lapCount++
-		dur, _ := time.ParseDuration(s.stopWatch.String())
-		lap := NewLap(s.lapCount, dur, s.stopWatch.Sub(s.prevStopWatch).Round(time.Millisecond))
-		fmt.Println(lap)
-		s.prevStopWatch = *s.stopWatch
-	}
-}
-
 func (s *Screen) Update() {
 	for _, sprite := range s.sprites {
 		sprite.Update()
@@ -228,7 +147,7 @@ func (s *Screen) Update() {
 }
 
 func (s *Screen) Render() {
-	setColor(s.renderer, s.bg)
+	ui.SetColor(s.renderer, s.bg)
 	s.renderer.Clear()
 	for _, sprite := range s.sprites {
 		sprite.Render(s.renderer)

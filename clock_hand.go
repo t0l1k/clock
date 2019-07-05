@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/t0l1k/sdl2/sdl2/ui"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -39,12 +40,12 @@ func NewSmallHand(renderer *sdl.Renderer, width, height int32, rect sdl.Rect, ce
 	}
 	renderer.SetRenderTarget(texHand)
 	texHand.SetBlendMode(sdl.BLENDMODE_BLEND)
-	setColor(renderer, bg)
+	ui.SetColor(renderer, bg)
 	renderer.Clear()
-	setColor(renderer, fg)
+	ui.SetColor(renderer, fg)
 	renderer.FillRect(&sdl.Rect{0, 0, center.X - center.X/4, rect.H})
 	renderer.FillRect(&sdl.Rect{0, rect.H / 3, rect.W, rect.H - rect.H/3*2})
-	FillCircle(renderer, center.X, center.Y, rect.H/5, bg)
+	ui.FillCircle(renderer, center.X, center.Y, rect.H/5, bg)
 	renderer.SetRenderTarget(nil)
 	paintRect := sdl.Rect{rect.X + width/2 - center.X, rect.Y + height/2 - rect.H/2, rect.W, rect.H}
 
@@ -66,23 +67,20 @@ func NewSmallHandRounded(renderer *sdl.Renderer, width, height int32, rect sdl.R
 	}
 	renderer.SetRenderTarget(texHand)
 	texHand.SetBlendMode(sdl.BLENDMODE_BLEND)
-	setColor(renderer, bg)
+	ui.SetColor(renderer, bg)
 	renderer.Clear()
-	// setColor(renderer, sdl.Color{0, 0, 255, 64})
-	// renderer.FillRect(&sdl.Rect{0, 0, rect.W, rect.H})
-	setColor(renderer, fg)
-	FillCircle(renderer, rect.H-rect.H/2, rect.H/2, rect.H/2, fg)
+	ui.SetColor(renderer, fg)
+	ui.FillCircle(renderer, rect.H-rect.H/2, rect.H/2, rect.H/2, fg)
 	h := rect.H / 4
 	if h < 1 {
 		h = 1
 	}
-	renderer.FillRect(&sdl.Rect{0, (rect.H - h) / 2, rect.W, h})
-	FillCircle(renderer, int32(float64(rect.W)*0.95), int32(float64(rect.H)/2), int32(float64(rect.H)/2.5), fg)
-	FillCircle(renderer, int32(float64(rect.W)*0.90), int32(float64(rect.H)/2), int32(float64(rect.H)/2.25), fg)
-	FillCircle(renderer, int32(float64(rect.W)*0.85), int32(float64(rect.H)/2), int32(float64(rect.H)/2), fg)
-	// renderer.FillRect(&sdl.Rect{0, 0, center.X - center.X/4, rect.H})
-	// renderer.FillRect(&sdl.Rect{0, rect.H / 3, rect.W, rect.H - rect.H/3*2})
-	FillCircle(renderer, center.X, center.Y, rect.H/5, bg)
+	renderer.FillRect(&sdl.Rect{rect.H / 3, (rect.H - h) / 2, rect.W - rect.H, h})
+	ui.FillCircle(renderer, int32(float64(rect.W)*0.97), int32(float64(rect.H)/2), int32(float64(rect.H)/3), fg)
+	ui.FillCircle(renderer, int32(float64(rect.W)*0.92), int32(float64(rect.H)/2), int32(float64(rect.H)/2.5), fg)
+	ui.FillCircle(renderer, int32(float64(rect.W)*0.87), int32(float64(rect.H)/2), int32(float64(rect.H)/2.25), fg)
+	ui.FillCircle(renderer, int32(float64(rect.W)*0.82), int32(float64(rect.H)/2), int32(float64(rect.H)/2), fg)
+	ui.FillCircle(renderer, center.X, center.Y, rect.H/5, bg)
 	renderer.SetRenderTarget(nil)
 	paintRect := sdl.Rect{rect.X + width/2 - center.X, rect.Y + height/2 - rect.H/2, rect.W, rect.H}
 
@@ -104,15 +102,15 @@ func NewBigHand(renderer *sdl.Renderer, width, height int32, rect sdl.Rect, cent
 	}
 	renderer.SetRenderTarget(texHand)
 	texHand.SetBlendMode(sdl.BLENDMODE_BLEND)
-	setColor(renderer, bg)
+	ui.SetColor(renderer, bg)
 	renderer.Clear()
-	setColor(renderer, fg)
+	ui.SetColor(renderer, fg)
 	renderer.DrawLine(0, 0, rect.W-rect.H/2, rect.H/4)
 	renderer.DrawLine(rect.W-rect.H/2, rect.H/4, rect.W, rect.H-rect.H/2)
 	renderer.DrawLine(rect.W-rect.H/2, (rect.H-1)-rect.H/4, rect.W, rect.H-rect.H/2)
 	renderer.DrawLine(0, rect.H-1, rect.W-rect.H/2, (rect.H-1)-rect.H/4)
 	renderer.DrawLine(0, 0, 0, rect.H)
-	FillCircle(renderer, center.X, center.Y, rect.H/5, fg)
+	ui.FillCircle(renderer, center.X, center.Y, rect.H/5, fg)
 	renderer.SetRenderTarget(nil)
 	paintRect := sdl.Rect{rect.X + width/2 - center.X, rect.Y + height/2 - rect.H/2, rect.W, rect.H}
 

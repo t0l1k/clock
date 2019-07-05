@@ -7,7 +7,7 @@ import (
 
 func main() {
 	var (
-		title               = "Clock"
+		title               = "Clock r-Reset Return-(Begin Stop) Space-new Lap"
 		width, height int32 = 800, 600
 	)
 
