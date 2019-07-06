@@ -150,8 +150,8 @@ func (s *AnalogClock) setStopWatchLap() {
 		s.lapCount++
 		dur, _ := time.ParseDuration(s.stopWatch.String())
 		lap := NewLap(s.lapCount, dur, s.stopWatch.Sub(s.prevStopWatch).Round(time.Millisecond))
-		fmt.Println(lap)
 		s.laps = append(s.laps, lap.String())
+		fmt.Println(lap.String())
 		s.stopWatchFrame.SetText(s.laps)
 		s.prevStopWatch = *s.stopWatch
 	}
@@ -177,7 +177,7 @@ func NewClockFace(renderer *sdl.Renderer, rect sdl.Rect, fg, bg sdl.Color) (texC
 	texClockFace.SetBlendMode(sdl.BLENDMODE_BLEND)
 	ui.SetColor(renderer, bg)
 	renderer.Clear()
-	ui.SetColor(renderer, sdl.Color{128, 128, 255, 255})
+	ui.SetColor(renderer, sdl.Color{255, 255, 128, 255})
 	var x, y int32
 	for y = 0; y < rect.H; y += 5 {
 		for x = 0; x < rect.W; x += 5 {
